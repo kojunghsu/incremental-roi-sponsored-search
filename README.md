@@ -1,6 +1,6 @@
 # Estimating Incremental Advertising ROI: A Difference-in-Differences Analysis
 
-Estimate the **causal impact** of sponsored search advertising using a **Difference-in-Differences (DiD)** framework and evaluate advertising ROI based on **incremental traffic** rather than raw paid clicks.
+Estimate the incremental effect of sponsored search advertising using a **Difference-in-Differences (DiD)** framework, state the assumptions required for a causal interpretation, and evaluate ROI using **incremental traffic** rather than raw paid clicks.
 
 ---
 
@@ -39,14 +39,26 @@ A technical glitch suspended **Google sponsored ads during Weeks 10–12**, whil
 The analysis follows a structured causal inference workflow:
 
 1. Identify why click-based ROI is biased
-2. Define treatment and control groups
-3. Visualize overall traffic trends
-4. Check pre-treatment trends
-5. Estimate a naive pre-post model
-6. Estimate treatment effect using Difference-in-Differences
-7. Decompose treatment effects into sponsored and organic traffic
-8. Recalculate ROI using incremental traffic
-9. Translate findings into business recommendations
+2. Define treatment, control, and identification assumptions
+3. Visualize overall traffic and pre-treatment trends
+4. Compare a naive pre-post model with Difference-in-Differences
+5. Quantify uncertainty with a confidence interval
+6. Run a pre-period placebo and leave-one-control-out sensitivity checks
+7. Decompose sponsored and organic traffic effects
+8. Translate incremental traffic into scenario-based ROI decisions
+
+---
+
+## Identification and Evidence Boundary
+
+The temporary Google ad suspension is plausibly exogenous, but the causal interpretation still depends on assumptions that cannot be proven from this small case dataset:
+
+- Google and the control platforms would have followed parallel trends without the interruption.
+- The Google interruption did not shift users to Bing, Yahoo, or Ask.
+- No concurrent Google-specific event changed traffic during Weeks 10-12.
+- The selected control-platform average is a reasonable counterfactual for Google.
+
+The project uses a visual pre-trend check, a pre-period placebo interruption, and leave-one-control-out estimates as diagnostics. With only four platforms, nine pre-treatment weeks, and three post-treatment weeks, uncertainty estimates and robustness checks should be interpreted as supporting evidence rather than proof of identification.
 
 ---
 
@@ -72,19 +84,27 @@ Managerial Recommendation
 
 ## Key Findings
 
-| Metric | Value |
-|--------|------:|
-| Estimated Incremental Traffic | **9,911 visits/week** |
+### Estimated campaign effect
+
+| Metric | Estimate | Evidence type |
+|--------|---------:|---------------|
+| Incremental Traffic | **9,911 visits/week** | DiD point estimate |
+| Organic Recovery | **19%** | Treatment-effect decomposition |
+
+The DiD estimate suggests that suspending Google sponsored ads reduced weekly traffic by approximately **9,911 visits** relative to the selected control platforms. This interpretation is conditional on the identification assumptions above.
+
+### Scenario-based financial translation
+
+| Metric | Scenario Value |
+|--------|---------------:|
 | Incremental Conversions | **1,189** |
 | Contribution Margin | **$24,975** |
 | Advertising Cost | **$3,674** |
-| Estimated Incremental ROI* | **580%** |
+| Incremental ROI | **580%** |
 
-\* Estimated using the scaled case dataset and intended for relative comparison rather than direct business valuation.
+The financial values use the scaled case dataset and assumed conversion and contribution-margin inputs. They illustrate how an incremental traffic estimate can support a budget decision; they are **not observed company financial results**.
 
-The Difference-in-Differences estimate suggests that suspending Google sponsored ads reduced weekly traffic by approximately **9,911 visits** relative to the control platforms.
-
-The corrected ROI calculation is based on estimated incremental traffic rather than observed paid clicks, making it a more causally grounded measure of advertising effectiveness.
+The R Markdown report also calculates a conventional 95% confidence interval, a pre-treatment placebo estimate, and leave-one-control-out sensitivity results. Because the panel is very small, these diagnostics should be read alongside—not in place of—the design assumptions.
 
 ---
 
