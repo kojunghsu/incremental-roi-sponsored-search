@@ -274,11 +274,11 @@ The estimated treatment effect is -9,910.59, indicating that Google traffic decr
 **Comparison with the Pre-Post Estimate**
 The first-difference estimate suggested a decline of 1,846 visits per week, or about 22%. However, the difference-in-differences estimate is substantially larger in magnitude.
 
-This difference indicates that the pre-post estimator fails to account for time trends that also affect the control platforms. As a result, it does not accurately capture the true effect of the treatment.
+This difference indicates that the pre-post estimator fails to account for time trends that also affect the control platforms. As a result, it does not isolate the treatment effect from concurrent time trends.
 
 **Implications for the Post Estimator**
 
-The pre-post approach attributes all observed changes in Google traffic to the removal of sponsored ads, ignoring concurrent changes in the broader environment. In contrast, the difference-in-differences approach uses the control group to isolate the common time trend, providing a more credible estimate of the causal effect.
+The pre-post approach attributes all observed changes in Google traffic to the removal of sponsored ads, ignoring concurrent changes in the broader environment. In contrast, the difference-in-differences approach uses the control group to isolate the common time trend, providing a more credible estimate under the stated identification assumptions.
 
 **Difference-in-Differences Visualization**
 ```{r}
@@ -349,6 +349,92 @@ The figure compares the average traffic of the treated group (Google) and the co
 In contrast, the treated group experiences a decline in traffic from 8,390 to 6,544 after the ads are suspended. This suggests that, while overall traffic in the market is increasing, Google traffic moves in the opposite direction during the same period.
 
 The difference between these two changes represents the difference-in-differences estimate. Specifically, the treated group decreases while the control group increases, implying a large negative treatment effect. This visual evidence supports the regression result that the suspension of sponsored ads led to a substantial reduction in Google traffic relative to the counterfactual trend.
+
+
+### Uncertainty and Sensitivity Checks
+
+The dataset contains only four platforms and twelve weeks, so statistical inference is exploratory. The confidence interval below uses the conventional OLS standard error from the specified DiD regression; it should not be interpreted as resolving the small-panel limitation.
+
+```{r}
+did_inference <- tidy(did_model, conf.int = TRUE) %>%
+  filter(term == "treated:after") %>%
+  transmute(
+    estimate,
+    std_error = std.error,
+    conf_low = conf.low,
+    conf_high = conf.high,
+    p_value = p.value
+  )
+
+kable(
+  did_inference,
+  digits = 2,
+  col.names = c("DiD Estimate", "Std. Error", "95% CI Low", "95% CI High", "p-value")
+)
+```
+
+**Leave-One-Control-Out Sensitivity**
+
+This check re-estimates the DiD effect after removing Bing, Yahoo, and Ask one at a time. A wide range would indicate that the result is highly dependent on the selected counterfactual platform.
+
+```{r}
+control_platforms <- c("bing", "yahoo", "ask")
+
+leave_one_out <- map_dfr(control_platforms, function(excluded_platform) {
+  sensitivity_model <- lm(
+    total_traffic ~ treated + after + treated:after,
+    data = ads %>% filter(platform != excluded_platform)
+  )
+
+  tidy(sensitivity_model, conf.int = TRUE) %>%
+    filter(term == "treated:after") %>%
+    transmute(
+      excluded_control = excluded_platform,
+      estimate,
+      conf_low = conf.low,
+      conf_high = conf.high
+    )
+})
+
+kable(
+  leave_one_out,
+  digits = 2,
+  col.names = c("Excluded Control", "DiD Estimate", "95% CI Low", "95% CI High")
+)
+```
+
+**Pre-Treatment Placebo Check**
+
+A placebo interruption is assigned to Weeks 7-9 using only the actual pre-treatment period. A large placebo interaction would weaken the parallel-trends interpretation.
+
+```{r}
+placebo_data <- ads %>%
+  filter(week <= 9) %>%
+  mutate(placebo_after = as.integer(week >= 7))
+
+placebo_model <- lm(
+  total_traffic ~ treated + placebo_after + treated:placebo_after,
+  data = placebo_data
+)
+
+placebo_result <- tidy(placebo_model, conf.int = TRUE) %>%
+  filter(term == "treated:placebo_after") %>%
+  transmute(
+    estimate,
+    conf_low = conf.low,
+    conf_high = conf.high,
+    p_value = p.value
+  )
+
+kable(
+  placebo_result,
+  digits = 2,
+  col.names = c("Placebo Estimate", "95% CI Low", "95% CI High", "p-value")
+)
+```
+
+These checks are diagnostics, not proof of identification. The preferred interpretation remains conditional on parallel trends, no spillovers across search engines, and no concurrent Google-specific shock.
+
 
 ## Understanding the Treatment Effect
 ```{r}
