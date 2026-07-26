@@ -619,12 +619,12 @@ ggsave(
 ```
 The overall treatment effect can be decomposed into two offsetting components. When Google sponsored ads were suspended, sponsored traffic decreased by approximately 12,204 visits per week, while organic traffic increased by about 2,293 visits per week. This indicates that some users substituted from paid advertisements to organic search results instead of leaving the website entirely.
 
-The estimated organic recovery rate is approximately 19%, meaning that about one-fifth of the lost sponsored traffic was recovered through organic search. However, this recovery was not sufficient to offset the decline in sponsored traffic, resulting in a net loss of approximately 9,911 weekly visits. These findings suggest that sponsored ads generate meaningful incremental traffic rather than simply shifting users between paid and organic channels, reinforcing the importance of evaluating advertising performance using incremental impact instead of raw paid clicks.
+The estimated organic recovery rate is approximately 19%, meaning that about one-fifth of the lost sponsored traffic was recovered through organic search. Recovery did not fully offset the sponsored-traffic decline. This decomposition is consistent with positive incrementality, but the exact net effect remains sensitive to the counterfactual trend specification.
 
 
 ## ROI Correction Using Incremental Traffic
 Bob’s ROI is overstated because it assumes all paid clicks are incremental. In reality, many users would have visited through organic search even without ads. Therefore, we use the DiD estimate to measure incremental traﬀic.
-From the DiD results, sponsored ads generate approximately 9,911 incremental visits per week.
+For financial translation, the baseline DiD point estimate uses 9,911 visits per week as a scenario input. Robustness specifications imply a wider traffic-effect range of approximately 8,060 to 14,252 visits per week, so the resulting ROI should be interpreted as a sensitivity scenario rather than an observed company return.
 
 ```{r roi-calculation}
 incremental_visits <- abs(did_coef)
@@ -650,7 +650,7 @@ Using the DiD estimate, the corrected ROI is calculated as follows:
 
 
 ## Managerial Recommendations
-The analysis shows that sponsored search advertising does generate incremental traffic, as total visits decline when ads are suspended. This indicates that paid ads play a role in driving additional customer activity rather than simply shifting all traffic from organic channels.
+The analysis provides evidence consistent with positive incremental traffic: Google visits decline after ads are suspended relative to the comparison platforms. Because pre-treatment slopes differ, the exact causal magnitude is uncertain.
 
 At the same time, the exact ROI magnitude should be interpreted with caution because the analysis is based on a scaled dataset. Therefore, the key takeaway is not the precise ROI value, but the direction and business implication of the effect: sponsored ads appear to generate positive incremental traffic, and future marketing decisions should be based on incremental impact rather than raw click volume.
 
@@ -658,4 +658,4 @@ Given these findings, Bazaar should continue investing in sponsored search adver
 
 In addition, Bazaar may consider selectively optimizing its ad spend, focusing on segments or keywords where the incremental impact is more likely to be meaningful, rather than applying a uniform strategy across all branded searches.
 
-Overall, the evidence suggests that sponsored ads contribute positively to traffic and revenue, but careful measurement and optimization are necessary to ensure that marketing investments are aligned with true business value.
+Overall, the evidence supports continued testing and selective investment rather than an unconditional budget recommendation. Future geo or platform holdouts should be designed to create a stronger counterfactual and directly validate incremental ROI.
