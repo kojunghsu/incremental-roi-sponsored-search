@@ -35,7 +35,7 @@ Bazaar.com aims to evaluate the true return on investment (ROI) of its sponsored
 
 To address this issue, we leverage a natural experiment created by the temporary suspension of Google sponsored ads in weeks 10–12. Using a difference-in-differences framework with other search platforms as a control group, we estimate the causal impact of sponsored ads on total traffic.
 
-The results show that the removal of sponsored ads leads to a substantial decline in Google traffic, indicating that advertising does generate incremental visits. However, a simple pre-post comparison understates this effect because it fails to account for broader time trends. Difference-in-differences estimates indicate that suspending Google sponsored ads reduced weekly traffic by approximately 9,911 visits relative to the control platforms.
+The analysis finds a substantial decline in Google traffic after sponsored ads were suspended. The baseline Difference-in-Differences estimate is -9,911 visits per week relative to the control platforms, but a formal pre-treatment trend test rejects strict parallel trends. The estimate is therefore presented as a design-dependent incrementality signal, supported by sensitivity checks rather than as a definitive causal effect.
 
 Using this estimate, we revise Bob’s ROI calculation by focusing on incremental traffic rather than total paid clicks. The revised ROI provides a more causally grounded measure of advertising effectiveness because it is based on estimated incremental visits rather than observed paid clicks. However, the exact magnitude should be interpreted with caution given the scaled nature of the dataset.
 
@@ -156,7 +156,7 @@ ggsave(
 ```
 Before estimating the causal effect, we first examine traffic patterns across all search platforms over time. Weeks 10–12 correspond to the period during which Google sponsored ads were temporarily suspended because of a technical glitch.
 
-The figure shows that traffic across all platforms generally follows an upward trend over time. However, Google exhibits a noticeable decline immediately after the advertising interruption, whereas Bing, Yahoo, and Ask continue their previous trajectories. This visual evidence provides an initial indication that the reduction in Google traffic is associated with the suspension of sponsored ads rather than an overall market slowdown. This motivates the use of a difference-in-differences design to estimate the causal effect while controlling for common time trends.
+Traffic across the platforms generally rises over time, while Google declines after the interruption and the controls continue upward. This descriptive pattern motivates a Difference-in-Differences analysis, but the figure alone cannot establish a causal effect or validate parallel trends.
 
 ## Parallel Trends Check
 ```{r}
@@ -208,7 +208,7 @@ ggsave(
   create.dir = TRUE
 )
 ```
-Before applying the difference-in-differences model, we visually compare traffic trends across Google, Bing, Yahoo, and Ask during the pre-treatment period (weeks 1–9). Although the platforms differ in traffic volume, all exhibit steadily increasing trends before the advertising suspension. The comparison focuses on the similarity of trends rather than traffic levels, since the parallel trends assumption concerns changes over time rather than absolute values. No obvious structural break or abrupt divergence is observed prior to treatment, providing some support for the parallel trends assumption. While this visual inspection cannot formally verify the assumption, it suggests that the control platforms provide a reasonable counterfactual for Google.
+Before applying the Difference-in-Differences model, we visually compare Weeks 1-9. All platforms trend upward, but visual similarity is not sufficient evidence of parallel trends. The formal slope test reported below detects a statistically significant Google-control trend difference, which weakens the strict causal interpretation of the baseline model.
 
 ## First-Difference Estimate
 ```{r}
@@ -267,9 +267,9 @@ To interpret the difference-in-differences estimate as causal, several assumptio
 Under these assumptions, the control platforms provide a valid counterfactual for what would have happened to Google traffic without the treatment.
 
 **Results and Interpretation**
-We estimate a difference-in-differences regression of total traffic on treatment status, time period, and their interaction. The coefficient on the interaction term captures the causal effect of the suspension of sponsored ads.
+We estimate a Difference-in-Differences regression of total traffic on treatment status, time period, and their interaction. Under the identifying assumptions, the interaction coefficient represents the incremental effect of the suspension.
 
-The estimated treatment effect is -9,910.59, indicating that Google traffic decreased by approximately 9,911 visits per week relative to the change observed in the control platforms after the ads were suspended.
+The baseline interaction estimate is **-9,910.59 visits per week** (conventional 95% CI: **-17,025 to -2,796**, p = **0.007**). Because the formal pre-treatment slope test rejects strict parallel trends, this is a baseline, design-dependent estimate rather than a definitive causal quantity.
 
 **Comparison with the Pre-Post Estimate**
 The first-difference estimate suggested a decline of 1,846 visits per week, or about 22%. However, the difference-in-differences estimate is substantially larger in magnitude.
@@ -348,7 +348,7 @@ The figure compares the average traffic of the treated group (Google) and the co
 
 In contrast, the treated group experiences a decline in traffic from 8,390 to 6,544 after the ads are suspended. This suggests that, while overall traffic in the market is increasing, Google traffic moves in the opposite direction during the same period.
 
-The difference between these two changes represents the difference-in-differences estimate. Specifically, the treated group decreases while the control group increases, implying a large negative treatment effect. This visual evidence supports the regression result that the suspension of sponsored ads led to a substantial reduction in Google traffic relative to the counterfactual trend.
+The difference between these changes is the baseline DiD estimate. The treated group decreases while controls increase, producing a large negative interaction. This descriptive visualization is consistent with an incrementality effect, but the validity of the counterfactual remains limited by the pre-treatment trend difference.
 
 
 ### Uncertainty and Sensitivity Checks
@@ -402,6 +402,62 @@ kable(
   col.names = c("Excluded Control", "DiD Estimate", "95% CI Low", "95% CI High")
 )
 ```
+
+**Formal Pre-Treatment Trend Check**
+
+A visual comparison can miss systematic slope differences. Using Weeks 1-9 only, the following model tests whether Google and the control platforms had different weekly trends before the ad suspension.
+
+```{r}
+pretrend_model <- lm(
+  total_traffic ~ treated + week + treated:week,
+  data = ads %>% filter(week <= 9)
+)
+
+pretrend_result <- tidy(pretrend_model, conf.int = TRUE) %>%
+  filter(term == "treated:week") %>%
+  transmute(
+    estimate,
+    conf_low = conf.low,
+    conf_high = conf.high,
+    p_value = p.value
+  )
+
+kable(
+  pretrend_result,
+  digits = 2,
+  col.names = c("Differential Weekly Trend", "95% CI Low", "95% CI High", "p-value")
+)
+```
+
+The estimated pre-treatment slope difference is **+786 visits per week** (95% CI: **129 to 1,443**, p = **0.020**). This provides evidence against strict parallel trends, so the baseline DiD estimate should be treated as design-dependent rather than definitive.
+
+**Group-Specific Linear-Trend Sensitivity**
+
+To assess whether the direction of the result survives a simple trend adjustment, we add a Google-specific linear trend to the DiD model.
+
+```{r}
+trend_adjusted_model <- lm(
+  total_traffic ~ treated + after + treated:after + week + treated:week,
+  data = ads
+)
+
+trend_adjusted_result <- tidy(trend_adjusted_model, conf.int = TRUE) %>%
+  filter(term == "treated:after") %>%
+  transmute(
+    estimate,
+    conf_low = conf.low,
+    conf_high = conf.high,
+    p_value = p.value
+  )
+
+kable(
+  trend_adjusted_result,
+  digits = 2,
+  col.names = c("Trend-Adjusted Estimate", "95% CI Low", "95% CI High", "p-value")
+)
+```
+
+The trend-adjusted estimate remains negative at **-14,252 visits per week** (95% CI: **-21,941 to -6,563**, p < **0.001**). The direction is stable, but the change in magnitude shows meaningful specification sensitivity.
 
 **Pre-Treatment Placebo Check**
 
