@@ -9,7 +9,7 @@ output:
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(
-  echo = TRUE,
+  echo = FALSE,
   warning = FALSE,
   message = FALSE,
   fig.width = 7,
@@ -37,9 +37,9 @@ To address this issue, we leverage a natural experiment created by the temporary
 
 The analysis finds a substantial decline in Google traffic after sponsored ads were suspended. The baseline Difference-in-Differences estimate is -9,911 visits per week relative to the control platforms, but a formal pre-treatment trend test rejects strict parallel trends. The estimate is therefore presented as a design-dependent incrementality signal, supported by sensitivity checks rather than as a definitive causal effect.
 
-Using this estimate, we revise Bob’s ROI calculation by focusing on incremental traffic rather than total paid clicks. The revised ROI provides a more causally grounded measure of advertising effectiveness because it is based on estimated incremental visits rather than observed paid clicks. However, the exact magnitude should be interpreted with caution given the scaled nature of the dataset.
+Using this estimate, we revise Bob’s ROI calculation by focusing on incremental traffic rather than total paid clicks. The resulting ROI is a scenario-based decision aid built from estimated incremental visits rather than observed paid clicks. Its exact magnitude should be interpreted with caution because the dataset is scaled and the identifying assumptions are imperfect.
 
-Given the positive incremental impact, Bazaar should maintain investment in sponsored search advertising, while adopting a more targeted strategy—reducing inefficient branded keyword spending, prioritizing segments where ads are more likely to generate incremental traffic, and evaluating performance based on incremental impact rather than raw click-based metrics.
+The evidence supports continued testing and selective investment rather than an unconditional budget recommendation. Bazaar should prioritize segments where ads are more likely to generate incremental traffic and validate future decisions through stronger platform or geographic holdouts.
 
 
 
@@ -89,7 +89,7 @@ We define:
 
 This setup forms a classic difference-in-differences design, where one unit experiences a treatment shock while comparable units do not. The treatment effect is captured by the interaction between the treated unit and the post-treatment period.
 
-This design allows us to estimate the causal effect by comparing the change in Google traffic before and after the interruption to the corresponding change in the control platforms, which serve as a counterfactual.
+This design estimates an incremental effect by comparing the change in Google traffic before and after the interruption with the corresponding change in the control platforms. Its causal interpretation depends on the counterfactual assumptions evaluated later in the report.
 
 ## Overall Traffic Trends
 ```{r}
@@ -218,8 +218,6 @@ google_only <- ads %>%
 
 # Simple pre-post regression
 post_model <- lm(total_traffic ~ after, data = google_only)
-summary(post_model)
-
 # Extract coefficient from the regression
 post_coef <- coef(post_model)[["after"]]
 
@@ -252,8 +250,6 @@ Therefore, the first-difference estimate is only a descriptive measure and does 
 ```{r}
 # Difference-in-Differences regression
 did_model <- lm(total_traffic ~ treated + after + treated:after, data = ads)
-summary(did_model)
-
 # Extract treatment effect (DiD estimate)
 did_coef <- coef(did_model)[["treated:after"]]
 
