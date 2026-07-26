@@ -104,7 +104,7 @@ The DiD estimate suggests that suspending Google sponsored ads reduced weekly tr
 
 The financial values use the scaled case dataset and assumed conversion and contribution-margin inputs. They illustrate how an incremental traffic estimate can support a budget decision; they are **not observed company financial results**.
 
-The R Markdown report also calculates a conventional 95% confidence interval, a pre-treatment placebo estimate, and leave-one-control-out sensitivity results. Because the panel is very small, these diagnostics should be read alongside—not in place of—the design assumptions.
+The R Markdown source includes code to calculate a conventional 95% confidence interval, a pre-treatment placebo estimate, and leave-one-control-out sensitivity results. These diagnostics require the original case dataset to rerun and are not presented here as independently verified numeric results. Because the panel is very small, they should be read alongside—not in place of—the design assumptions.
 
 ---
 
